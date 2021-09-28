@@ -3,8 +3,8 @@ const readline = require("readline-sync");
 
 (function main() {
   const interval = {
-    first: 0,
-    second: 0,
+    beginning: 0,
+    end: 0,
   };
   const controlColor = {
     counterColor: 0,
@@ -15,26 +15,24 @@ const readline = require("readline-sync");
   for (const key in interval) {
     interval[key] = +readline.question(`Enter the ${key} value:`);
 
-    if (interval.first < 0 || interval.second < 0) {
-      console.log(colors.red(`Numbers must be positive!`));
-      return;
-    }
-    if (isNaN(interval[key])) {
-      console.log(colors.red("You entered not a number!"));
+    const check = checkNumber(interval[key]);
+
+    if (check) {
+      console.log(colors.red(check.textErr));
       return;
     }
   }
 
-  if (interval.first > interval.second) {
+  if (interval.beginning > interval.end) {
     console.log(
       colors.red(
-        `The first(${interval.first}) number must be greater than the second(${interval.second})!`
+        `The first(${interval.beginning}) number must be greater than the second(${interval.end})!`
       )
     );
     return;
   }
 
-  nextPrime: for (let i = interval.first; i <= interval.second; i++) {
+  nextPrime: for (let i = interval.beginning; i <= interval.end; i++) {
     for (let j = 2; j < i; j++) {
       if (i % j == 0) continue nextPrime;
     }
@@ -47,6 +45,16 @@ const readline = require("readline-sync");
     });
   } else {
     console.log(colors.red("No prime numbers in the range"));
+  }
+
+  function checkNumber(num) {
+    if (num < 0) {
+      return { textErr: "Numbers must be positive!" };
+    }
+    if (isNaN(num)) {
+      return { textErr: "You entered not a number!" };
+    }
+    return false;
   }
 
   function returnColorText(text) {
