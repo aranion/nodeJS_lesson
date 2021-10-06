@@ -32,6 +32,8 @@
 // Record 3
 // Record 4
 
+
+
 // lesson 2( task 2)
 
 // Напишите программу, которая будет принимать на вход несколько аргументов: дату и время в формате
@@ -44,7 +46,7 @@ const readline = require("readline-sync");
 const EventEmitter = require("events");
 const emitter = new EventEmitter();
 
-
+// task 2, variant 1
 function main() {
   const timer = readline.question(
     'Enter timer value in the format "hour-day-month-year"(13-05-10-2021):'
@@ -64,16 +66,14 @@ function main() {
     return;
   }
 
-  
+  initialEmit();
 
-  
-  run(timerStructure)
-  
-
-  // showTimer(timerStructure);
+  const interval = setInterval(() => {
+    calcTimer(timerStructure, interval);
+    showTimer(timerStructure);
+  }, 1000);
 }
-
-function validationTimer({hour, day, month, year}) {
+function validationTimer({ hour, day, month, year }) {
   console.clear();
 
   if (!hour || isNaN(+hour) || +hour > 23 || +hour < 0) {
@@ -93,125 +93,90 @@ function validationTimer({hour, day, month, year}) {
     return true;
   }
 }
-function showTimer({hour, day, month, year, minutes, seconds}) {
+function showTimer(timerStructure) {
+  const { hour, day, month, year, minutes, seconds } = timerStructure;
   const timer = `year: ${year} month: ${month} day: ${day} hour: ${hour} minutes: ${minutes} seconds: ${seconds}`;
   console.clear();
 
-  if (hour + day + month + year + minutes + seconds > 0) {
-    console.log(timer);
-  } else {
+  if (calcTimeIsOver(timerStructure) === 0) {
     console.log("Time is over!");
-    return;
+  } else {
+    console.log(timer);
   }
 }
-function calcSeconds(timerStructure) {
-
-  if( timerStructure.seconds === 0 ) {
-    timerStructure.seconds = 59;
-    emitter.emit('minutes',  calcMinutes(timerStructure));
-    return timerStructure;
-  } 
-  timerStructure.seconds--;
-
-  return timerStructure;
-};
-function calcMinutes(timerStructure) {
-
-  if( timerStructure.minutes === 0 ) {
-    timerStructure.minutes = 59;
-    return timerStructure;
+function calcTimeIsOver(timerStructure) {
+  let sum = 0;
+  for (const key in timerStructure) {
+    sum += timerStructure[key];
   }
-  timerStructure.minutes--;
+  return sum;
+}
+function calcTimer(timerStructure, interval) {
+  if (calcTimeIsOver(timerStructure) === 0) {
+    clearInterval(interval);
+    return;
+  }
 
-  return timerStructure;
-};
-function run(timerStructure) {
-
-  emitter.on('minutes', (timerStructure)=> {
-  });
-  emitter.on('second', (timerStructure)=> {
-    showTimer(timerStructure);
-  });
-  
-  emitter.on('hour', (timerStructure)=> {
-    showTimer(timerStructure);
-  });
-  emitter.on('day', (timerStructure)=> {
-    showTimer(timerStructure);
-  });
-  emitter.on('year', (timerStructure)=> {
-    showTimer(timerStructure);
-  });
-  const interval = setInterval(()=> emitter.emit('second',  calcSeconds(timerStructure)), 50);
-  // const interval = setInterval(()=> emitter.emit('second',  'text test'), 500);
-};
+  emitter.emit("seconds", timerStructure);
+}
+function calcSeconds(timer) {
+  if (timer.seconds <= 0) {
+    timer.seconds = 59;
+    emitter.emit("minutes", timer);
+  } else {
+    timer.seconds--;
+  }
+}
+function calcMinutes(timer) {
+  if (timer.minutes <= 0) {
+    timer.minutes = 59;
+    emitter.emit("hour", timer);
+  } else {
+    timer.minutes--;
+  }
+}
+function calcHour(timer) {
+  if (timer.hour <= 0) {
+    timer.hour = 23;
+    emitter.emit("day", timer);
+  } else {
+    timer.hour--;
+  }
+}
+function calcDay(timer) {
+  if (timer.day <= 0) {
+    timer.day = 30;
+    emitter.emit("month", timer);
+  } else {
+    timer.day--;
+  }
+}
+function calcMonth(timer) {
+  if (timer.month <= 0) {
+    timer.month = 11;
+    emitter.emit("year", timer);
+  } else {
+    timer.month--;
+  }
+}
+function calcYear(timer) {
+  if (timer.year <= 0) {
+    timer.year = 0;
+  } else {
+    timer.year--;
+  }
+}
+function initialEmit() {
+  emitter.on("seconds", (timerStructure) => calcSeconds(timerStructure));
+  emitter.on("minutes", (timerStructure) => calcMinutes(timerStructure));
+  emitter.on("hour", (timerStructure) => calcHour(timerStructure));
+  emitter.on("day", (timerStructure) => calcDay(timerStructure));
+  emitter.on("month", (timerStructure) => calcMonth(timerStructure));
+  emitter.on("year", (timerStructure) => calcYear(timerStructure));
+}
 
 main();
 
 
+// task 2, variant 2
 
-// const colors = require("colors");
-// const readline = require("readline-sync");
-
-// (function main() {
-//   const interval = {
-//     beginning: 0,
-//     end: 0,
-//   };
-//   const controlColor = {
-//     counterColor: 0,
-//     colorsTab: ["green", "yellow", "red"],
-//   };
-//   const primeNumbers = [];
-
-//   for (const key in interval) {
-//     interval[key] = +readline.question(`Enter the ${key} value:`);
-
-//     const check = checkNumber(interval[key]);
-
-//     if (check) {
-//       console.log(colors.red(check.textErr));
-//       return;
-//     }
-//   }
-
-//   if (interval.beginning > interval.end) {
-//     console.log(
-//       colors.red(
-//         `The first(${interval.beginning}) number must be greater than the second(${interval.end})!`
-//       )
-//     );
-//     return;
-//   }
-
-//   nextPrime: for (let i = interval.beginning; i <= interval.end; i++) {
-//     for (let j = 2; j < i; j++) {
-//       if (i % j == 0) continue nextPrime;
-//     }
-//     primeNumbers.push(i);
-//   }
-
-//   if (primeNumbers.length !== 0) {
-//     primeNumbers.forEach((el) => {
-//       console.log(returnColorText(el));
-//     });
-//   } else {
-//     console.log(colors.red("No prime numbers in the range"));
-//   }
-
-//   function checkNumber(num) {
-//     if (num < 0) {
-//       return { textErr: "Numbers must be positive!" };
-//     }
-//     if (isNaN(num)) {
-//       return { textErr: "You entered not a number!" };
-//     }
-//     return false;
-//   }
-
-//   function returnColorText(text) {
-//     controlColor.counterColor > 2 ? (controlColor.counterColor = 0) : "";
-
-//     return colors[controlColor.colorsTab[controlColor.counterColor++]](text);
-//   }
-// })();
