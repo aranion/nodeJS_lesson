@@ -101,7 +101,7 @@ function showTimer(timerStructure) {
   if (calcTimeIsOver(timerStructure) === 0) {
     emitter.emit("endTimer");
   } else {
-    console.log(timer);
+    console.log(timer); 
   }
 }
 function calcTimeIsOver(timerStructure) {
