@@ -46,7 +46,7 @@ const readline = require("readline-sync");
 const EventEmitter = require("events");
 const emitter = new EventEmitter();
 
-// task 2, variant 1
+// task 2
 function main() {
   const timer = readline.question(
     'Enter timer value in the format "hour-day-month-year"(13-05-10-2021):'
@@ -99,7 +99,7 @@ function showTimer(timerStructure) {
   console.clear();
 
   if (calcTimeIsOver(timerStructure) === 0) {
-    console.log("Time is over!");
+    emitter.emit("endTimer");
   } else {
     console.log(timer);
   }
@@ -109,7 +109,7 @@ function calcTimeIsOver(timerStructure) {
   for (const key in timerStructure) {
     sum += timerStructure[key];
   }
-  return sum;
+  return +sum;
 }
 function calcTimer(timerStructure, interval) {
   if (calcTimeIsOver(timerStructure) === 0) {
@@ -122,6 +122,7 @@ function calcTimer(timerStructure, interval) {
 function calcSeconds(timer) {
   if (timer.seconds <= 0) {
     timer.seconds = 59;
+
     emitter.emit("minutes", timer);
   } else {
     timer.seconds--;
@@ -173,10 +174,10 @@ function initialEmit() {
   emitter.on("day", (timerStructure) => calcDay(timerStructure));
   emitter.on("month", (timerStructure) => calcMonth(timerStructure));
   emitter.on("year", (timerStructure) => calcYear(timerStructure));
+  emitter.on("endTimer", () => endTimer());
+}
+function endTimer() {
+  console.log("Time is over!");
 }
 
 main();
-
-
-// task 2, variant 2
-
