@@ -1,35 +1,104 @@
 #!/usr/bin/env node
 
-const fs = require("fs");
-const fsPromises = require("fs/promises");
+// Запрос вида "reade -p C:/Users/Aranion/Desktop/Учеба/nodeJS/lesson_1 -s '89.123.1.41'"
+// открывает директорию  "C:/Users/Aranion/Desktop/Учеба/nodeJS/lesson_1"
+// ищет в открываемых файлах строки с текстом '89.123.1.41'
+// * тестировалось на Windows 10
+
 const readline = require("readline");
+const fs = require("fs");
 const path = require("path");
+const yargs = require("yargs");
 const inquirer = require("inquirer");
+const colors = require("colors");
 
-const executorDir = process.cwd();
-// перечень всей дирриктории
-// const list = fs.readdirSync(__dirname);
+// Объявление параметров для запроса -p и -s
+const optionsYargs = yargs
+  .usage("Usage: -p <path> to file")
+  .options("p", {
+    alias: "path",
+    describe: "Path to file",
+    type: "string",
+    demandOption: false,
+  })
+  .options("s", {
+    alias: "search",
+    describe: "Search for text in a file",
+    type: "string",
+    demandOption: false,
+  }).argv;
+
+// Если параметр -p не задан, используется путь по умолчанию
+let executorDir = optionsYargs.path || process.cwd();
+const searchText = optionsYargs.search;
+
 const isFile = (fileName) => fs.lstatSync(fileName).isFile();
-// const list = fs.readdirSync(__dirname).filter(isFile);
-const list = fs.readdirSync(executorDir).filter(isFile);
-// console.log(list);
+const getList = (executorDir) => {
+  const list = [".", ".."];
+  fs.readdirSync(executorDir).map((el) => list.push(el));
+  return list;
+};
 
-inquirer
-  .prompt([
-    {
-      name: "fileName",
-      type: "list",
-      message: "Choose a file to read",
-      choices: list,
-    },
-  ])
-  .then((answer) => answer.fileName)
-  .then((fileName) => {
-    const fullPatch = path.join(executorDir, fileName);
-    const data = fs.readFileSync(fullPatch, "utf-8");
+const selectFileName = (list) => {
+  inquirer
+    .prompt([
+      {
+        name: "fileName",
+        type: "list",
+        message: "Choose a file to read",
+        choices: list,
+      },
+    ])
+    .then((answer) => answer.fileName)
+    .then((fileName) => {
+      const fullPatch = path.join(executorDir, fileName);
 
-    console.log(data);
+      console.clear();
+
+      // Проверка является ли выбранное значение файлом или директорией
+      if (isFile(fullPatch)) {
+        if (searchText) searchInFile(fullPatch, searchText);
+        else console.log(fs.readFileSync(fullPatch, "utf-8"));
+      } else {
+        executorDir = fullPatch;
+        // Запуск повторно для выбора директории
+        selectFileName(getList(executorDir));
+      }
+    })
+    .catch((err) => console.log(err));
+};
+
+selectFileName(getList(executorDir));
+
+// Поиск по файлу и вывод строки в консоль
+const searchInFile = (pathToFile, searchText) => {
+  let counterSearch = 0;
+  const readStream = fs.createReadStream(pathToFile, {
+    flags: "r",
+    encoding: "utf-8",
   });
+  
+  readStream.on("open", () => console.log(`Start search <${searchText}>...`));
+  readStream.on("error", (err) => console.log("error", err));
+
+  const rl = readline.createInterface({
+    input: readStream,
+  });
+
+  rl.on("line", (input) => {
+    if (input.includes(searchText)) {
+      counterSearch++;
+      console.log(colors.green(input)); 
+    }
+  });
+  rl.on("close", () => {
+    console.log(`Search counter <${searchText}>: ${counterSearch} шт.`);
+  });
+};
+
+
+
+// Код с урока...
 
 // const rl = readline.createInterface({
 //   input: process.stdin,
@@ -71,60 +140,3 @@ inquirer
 //     rl.close();
 //   }
 // })();
-
-// const ACCESS_LOG = "./access.log";
-// const searchIP = ["89.123.1.41", "34.48.240.111"];
-// const searchIPcounter = { "89.123.1.41": 0, "34.48.240.111": 0 };
-// const writeStream = {};
-
-// const readStream = fs.createReadStream(ACCESS_LOG, {
-//   flags: "r",
-//   encoding: "utf-8",
-//   // readline: 1,
-//   // start: 0,
-//   // end: 1024,
-//   // highWaterMark:  1024,
-// });
-// const rl = readline.createInterface({
-//   input: readStream,
-// });
-// searchIP.forEach((el) => {
-//   writeStream[el] = fs.createWriteStream(`./${el}_requests.log`, {
-//     encoding: "utf-8",
-//     flags: "a",
-//   });
-// });
-
-// readStream.on('open', ()=> console.log('Start...') );
-// readStream.on('end', ()=> console.log('End') );
-// readStream.on('error', (err)=> console.log('error', err) );
-
-// rl.on("line", (input) => {
-//   searchIP.forEach((el) => {
-//     if (input.includes(el)) {
-//       searchIPcounter[el]++;
-//       writeStream[el].write(input);
-//       writeStream[el].write("\n");
-//     }
-//   });
-// });
-
-// rl.on("close", () => {
-//   console.clear();
-//   console.log("Counter: ");
-//   for (const key in searchIPcounter) {
-//     console.log(`${key}: ${searchIPcounter[key]}`);
-//   }
-// });
-
-// readStream.on("data", (chunk) => {
-//   console.log(chunk);
-//   console.log('-----');
-// });
-// readStream.on("end", () => console.log("Finished!"));
-// readStream.on("error", (err) => console.log("error!", err));
-
-// // requests.forEach((log) => {
-// //   writeStream.write(log);
-// //   writeStream.write("\n");
-// // });
