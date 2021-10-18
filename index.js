@@ -14,7 +14,7 @@ const colors = require("colors");
 
 // Объявление параметров для запроса -p и -s
 const optionsYargs = yargs
-  .usage("Usage: -p <path> to file")
+  .usage("Usage: -p <path> to file") 
   .options("p", {
     alias: "path",
     describe: "Path to file",
