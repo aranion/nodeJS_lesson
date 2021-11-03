@@ -6,6 +6,7 @@
 .pnp.js
 *.log
 lesson_*
+multistreams
 
 # testing
 /coverage
