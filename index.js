@@ -17,17 +17,15 @@ const server = http.createServer((req, res) => {
 const io = socket(server);
 
 io.on("connection", (client) => {
-  console.log("--Connected--");
+  console.log("--Connected--", client.id);
   users[client.id] = generationName();
 
   client.on("setUserName", (name) => (users[client.id] = name));
-
+  client.emit("getUserNameDefault", users[client.id]);
   io.sockets.emit("counterClients", users);
-
   client.on("checkConnect", () => {
     client.broadcast.emit("checkConnectUser", users[client.id]);
   });
-
   client.on("client-msg", ({ message }) => {
     const data = {
       name: users[client.id],
@@ -36,9 +34,8 @@ io.on("connection", (client) => {
     client.broadcast.emit("server-msg", data);
     client.emit("server-msg", data);
   });
-
   client.on("disconnect", () => {
-    console.log("-----disconnect-----");
+    console.log("-----disconnect-----", users[client.id]);
     const disconnectUserName = users[client.id];
     delete users[client.id];
 
@@ -54,4 +51,4 @@ function generationName() {
   return "Anonym" + Math.round(Math.random() * 100);
 }
 
-server.listen(port);
+server.listen(port, () => console.log("Start server, port:", port));
