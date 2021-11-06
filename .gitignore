@@ -2,8 +2,12 @@
 
 # dependencies
 /node_modules
+*.log
+lesson_*
+multistreams
 /.pnp
 .pnp.js
+
 
 # testing
 /coverage
