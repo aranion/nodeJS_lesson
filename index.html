@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Socket</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.socket.io/4.2.0/socket.io.min.js"
+    integrity="sha384-PiBR5S00EtOj2Lto9Uu81cmoyZqR57XcOna1oAuVuIEjzj0wpqDVfD0JA9eXlRsj" crossorigin="anonymous">
+  </script>
+  <style>
+    .mine_wrapper {
+      background: ghostwhite;
+      border: 1px solid black;
+      padding: 10px;
+      width: 700px;
+      display: flex;
+      justify-content: center;
+      flex-direction: column-reverse;
+      align-items: center;
+      margin: 0 auto;
+    }
+
+    .wrapper_userConnect {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      height: 100vh;
+      width: 300px;
+      display: flex;
+      flex-direction: column-reverse;
+    }
+
+    .userConnect,
+    .usersCounter,
+    .nickWrapper {
+      background: black;
+      opacity: 0.7;
+      color: #ffffff;
+      min-width: 250px;
+      height: 100px;
+      border-radius: 10px;
+      margin: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .usersCounter {
+      right: 0;
+      position: absolute;
+      top: 0;
+      min-width: 50px;
+      height: 25px;
+    }
+
+    .nickWrapper {
+      position: absolute;
+      left: 0;
+      top: 0;
+      right: auto;
+      min-width: 150px;
+      height: 25px;
+      padding: 0 10px;
+    }
+
+    .formInputName {
+      display: block;
+    }
+
+    .invisible {
+      display: none;
+    }
+
+    .messageRight {
+      text-align: right;
+      margin-left: auto;
+    }
+
+    .messageItem {
+      border: 1px solid black;
+      border-radius: 10px;
+      padding: 5px 10px;
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      margin-top: 10px;
+      background: ghostwhite;
+    }
+
+    .messageItem_name {
+      font-weight: bold;
+    }
+
+    #messages {
+      width: 60%;
+      background: white;
+      padding: 20px;
+      margin: 10px;
+      border: 1px solid grey;
+    }
+
+    .online,
+    .offline {
+      width: 10px;
+      height: 10px;
+      background-color: green;
+      border-radius: 50%;
+      margin-left: 10px;
+    }
+
+    .offline {
+      background-color: red;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="mine_wrapper">
+    <form action="#" class="formInputName">
+      <label for="name">
+        Введите имя:
+        <input type="text" name="name" autofocus required>
+      </label>
+      <button>Продолжить</button>
+    </form>
+    <form action="#" class="formChat invisible">
+      <label for="input">Введите сообщение:
+        <input id="input" name="input" type="text" autofocus>
+      </label>
+      <button id="button">Send</button>
+      <button id="button2">Disconnect</button>
+    </form>
+    <div id="messages"></div>
+  </div>
+  <div class="wrapper_userConnect"></div>
+  <div class="usersCounter"></div>
+  <div class="nickWrapper">Ваш логин: &#129489;<span class="nick"></span><span class="online"></span></div>
+  <script>
+    const socket = io('localhost:5555');
+    const messageBlock = document.getElementById('messages');
+    const formChat = document.querySelector('.formChat');
+    const formInputName = document.querySelector('.formInputName');
+    const sendButton = document.getElementById('button');
+    const sendButton2 = document.getElementById('button2');
+    const input = document.getElementById('input');
+    const wrapperUserConnect = document.querySelector('.wrapper_userConnect');
+    const usersCounter = document.querySelector('.usersCounter');
+    const userNick = document.querySelector('.nick');
+    const online = document.querySelector('.online');
+
+    let userNameLocal = '';
+
+    socket.on('connect', () => {
+      online.classList.remove('offline')
+    });
+    socket.on('getUserNameDefault', (name) => userNick.innerText = name);
+    socket.on('counterClients', (users) => renderCounterClients(users));
+    socket.on('checkConnectUser', (userName) => renderConnectUser(userName, true));
+    socket.on('checkDisconnectUser', (userName) => renderConnectUser(userName, false));
+    socket.on('server-msg', sendMessage);
+
+    function renderCounterClients(users) {
+      usersCounter.innerHTML = `<span>&#129489; ${Object.keys(users).length}</span>`
+    }
+
+    function renderConnectUser(userName, isConnect) {
+      const text = isConnect ? 'подключен' : 'отключен';
+
+      wrapperUserConnect.insertAdjacentHTML('afterbegin', `
+        <div class="userConnect ">
+          <span>${userName} ${text}!</span>
+        </div>`);
+      const userConnect = document.querySelector('.userConnect');
+      userConnect.classList.remove('invisible');
+      setTimeout(() => userConnect.classList.add('invisible'), 4000);
+    }
+
+    function sendMessage({
+      message,
+      name
+    }) {
+      messageBlock.insertAdjacentHTML('beforeend', `
+    <div class="messageItem ${userNameLocal === name ? 'messageRight': ''}">
+      <span class="messageItem_name">${name}:</span>
+      <span>${message}</span>
+    </div>`)
+    }
+
+    formInputName.onsubmit = (e) => {
+      e.preventDefault();
+      formInputName.classList.add('invisible');
+      formChat.classList.remove('invisible');
+      input.focus();
+      const userName = formInputName.querySelector('input').value;
+      userNick.innerHTML = userName;
+      userNameLocal = userName;
+
+      socket.emit('setUserName', userName);
+      socket.emit('checkConnect');
+    }
+    formChat.onsubmit = (e) => {
+      e && e.preventDefault();
+      socket.emit('client-msg', {
+        message: input.value
+      });
+    };
+    sendButton2.onclick = (e) => {
+      socket.emit('disconnectButton');
+      online.classList.add('offline');
+    }
+  </script>
+</body>
+
+</html>
