@@ -1,15 +1,23 @@
 {
-  "name": "lesson_1",
+  "name": "lesson_node",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "server": "nodemon server/index.js"
+  },
+  "bin": {
+    "reade": "index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "colors": "^1.4.0"
+    "colors": "^1.4.0",
+    "inquirer": "^8.2.0",
+    "readline-sync": "^1.4.10",
+    "yargs": "^17.2.1"
   }
 }
